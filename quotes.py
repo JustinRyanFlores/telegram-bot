@@ -21,7 +21,7 @@ def get_ai_quote(character="Jaxim", max_attempts=5):
     genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
     model = genai.GenerativeModel(
-        "models/gemini-1.5-flash",
+        "models/gemini-2.0-flash",
         generation_config=GenerationConfig(
             temperature=0.9,
             top_k=40,
@@ -32,7 +32,10 @@ def get_ai_quote(character="Jaxim", max_attempts=5):
     used_quotes = load_used_quotes()
 
     for attempt in range(max_attempts):
-        prompt = f"Give me a two sentence, magical motivational quote from a genie named {character}. Only reply with one unique line."
+        prompt = f"""You're a whimsical, all-knowing genie named {character} — part fortune teller, part idea whisperer. 
+                    You're sassy, sweet, a little silly, but always uplifting. 
+                    Give me one magical, two-sentence motivational quote in your charming voice. 
+                    Make it unique, sparkly, and full of flair. Only reply with the quote — no extras."""
         response = model.generate_content(prompt)
 
         quote = next((line.strip() for line in response.text.strip().splitlines() if line.strip()), None)
