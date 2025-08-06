@@ -241,7 +241,7 @@ def get_tokens_sent(wallet):
     try:
         total_sent = 0
         latest_block = web3.eth.block_number
-        from_block = max(latest_block - 5000, 0)
+        from_block = 0
 
         events = contract.events.Transfer().get_logs(
             from_block=from_block,
