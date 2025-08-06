@@ -244,13 +244,35 @@ async def wishcount(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def get_tokens_sent(wallet):
     try:
         wallet = wallet.lower()
-        url = f"{COVALENT_BASE_URL}/{CHAIN_NAME}/address/{wallet}/transfers_v2/"
-        params = {
+        
+        # 🔹 1. Check current JAXIM balance
+        balance_url = (
+            f"{COVALENT_BASE_URL}/{CHAIN_NAME}/address/"
+            f"{wallet}/balances_v2/?contract-address={JAXIM_CONTRACT}&key={COVALENT_API_KEY}"
+        )
+        balance_response = requests.get(balance_url)
+        balance_data = balance_response.json()
+
+        if not balance_data.get("error"):
+            items = balance_data["data"]["items"]
+            for item in items:
+                if item["contract_address"].lower() == JAXIM_CONTRACT.lower():
+                    balance_wei = int(item["balance"])
+                    decimals = item["contract_decimals"]
+                    symbol = item["contract_ticker_symbol"]
+                    balance = balance_wei / (10 ** decimals)
+                    print(f"🔎 {symbol} Balance of user {wallet}: {balance}")
+        else:
+            print("⚠️ Failed to fetch current balance:", balance_data.get("error_message"))
+
+        # 🔹 2. Get all transfers to the bot
+        transfer_url = f"{COVALENT_BASE_URL}/{CHAIN_NAME}/address/{wallet}/transfers_v2/"
+        transfer_params = {
             "contract-address": JAXIM_CONTRACT,
             "key": COVALENT_API_KEY
         }
 
-        response = requests.get(url, params=params)
+        response = requests.get(transfer_url, params=transfer_params)
         if response.status_code != 200:
             print(f"⚠️ API error: {response.status_code} {response.reason}")
             return None
@@ -263,14 +285,20 @@ def get_tokens_sent(wallet):
         total_sent = 0
         for item in data["data"]["items"]:
             for transfer in item["transfers"]:
-                if transfer["from_address"].lower() == wallet and transfer["to_address"].lower() == BOT_WALLET:
-                    total_sent += int(transfer["delta"]) / (10 ** transfer["contract_decimals"])
+                if (
+                    transfer["from_address"].lower() == wallet
+                    and transfer["to_address"].lower() == BOT_WALLET
+                ):
+                    delta = int(transfer["delta"])
+                    decimals = transfer["contract_decimals"]
+                    total_sent += delta / (10 ** decimals)
 
         return int(total_sent)
 
     except Exception as e:
         print("❌ Error fetching tokens sent:", str(e))
         return None
+
 
 # === Transfer Watcher ===
 

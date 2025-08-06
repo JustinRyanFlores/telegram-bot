@@ -17,7 +17,7 @@ def save_quote(quote):
     with open(USED_QUOTES_FILE, "a", encoding="utf-8") as f:
         f.write(quote + "\n")
 
-def get_ai_quote(character="Jeanie", max_attempts=5):
+def get_ai_quote(character="Jaxim", max_attempts=5):
     genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
     model = genai.GenerativeModel(
