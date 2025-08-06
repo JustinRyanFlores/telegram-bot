@@ -73,7 +73,7 @@ async def welcome_on_added(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 photo=photo,
                 caption=(
                     "🧞‍♂️ *Welcome!* I'm *Jaxim Jeanie*, your blockchain genie!\n\n"
-                    "Use /howto to learn how to send tokens and receive magical AI quotes ✨"
+                    "Use /howto to learn how to send tokens and receive magical advices! ✨"
                 ),
                 parse_mode="Markdown"
             )
