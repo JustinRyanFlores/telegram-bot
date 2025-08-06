@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.pyc
+
+# Environment files
+.env
+
+# SQLite database
+*.db
+
+# VSCode or PyCharm config
+.vscode/
+.idea/
