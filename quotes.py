@@ -1,20 +1,19 @@
-import subprocess
+import os
+from dotenv import load_dotenv
+import google.generativeai as genai
 
-def get_ai_quote(character="Jaxim"):
-    prompt = f"You are {character}, a friendly and wise Genie. Give me a short motivational quote."
+load_dotenv()
 
-    # Run Ollama locally with the Mistral model
-    result = subprocess.run(
-        ["ollama", "run", "mistral"],
-        input=prompt.encode(),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
-    )
+def get_ai_quote(character="Jeanie"):
+    genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
-    # Decode and return the model's response
-    response = result.stdout.decode().strip()
-    return response
+    # ✅ Use one of the working models
+    model = genai.GenerativeModel("models/gemini-1.5-flash")
 
-# Example usage
+    prompt = f"Give me a short, magical motivational quote from a genie named {character}."
+    response = model.generate_content(prompt)
+    return response.text.strip()
+
 if __name__ == "__main__":
-    print(get_ai_quote())
+    quote = get_ai_quote()
+    print("Generated quote:", quote)
