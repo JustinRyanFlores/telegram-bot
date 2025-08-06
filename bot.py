@@ -1,6 +1,6 @@
 import os
-import requests
 import asyncio
+import requests
 from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 from telegram import Update
@@ -22,11 +22,13 @@ from db import (
 load_dotenv()
 
 # ENV variables
-COVALENT_API_KEY = os.getenv("COVALENT_API_KEY") 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 BASE_RPC = os.getenv("BASE_RPC")
 JAXIM_CONTRACT = "0x082Ef77013B51f4a808e83a4d345cdc88cFdd9c4"
 BOT_WALLET = os.getenv("BOT_WALLET").lower()
+COVALENT_API_KEY = os.getenv("COVALENT_API_KEY")
+COVALENT_BASE_URL = "https://api.covalenthq.com/v1"
+CHAIN_NAME = "base-mainnet"
 
 # Web3 connection
 web3 = Web3(Web3.HTTPProvider(BASE_RPC))
@@ -241,33 +243,35 @@ async def wishcount(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def get_tokens_sent(wallet):
     try:
-        total_sent = 0
-        url = f"https://api.covalenthq.com/v1/base-mainnet/address/{wallet}/transfers_v2/?key={COVALENT_API_KEY}"
+        wallet = wallet.lower()
+        url = f"{COVALENT_BASE_URL}/{CHAIN_NAME}/address/{wallet}/transfers_v2/"
+        params = {
+            "contract-address": JAXIM_CONTRACT,
+            "key": COVALENT_API_KEY
+        }
 
-        response = requests.get(url)
+        response = requests.get(url, params=params)
+        if response.status_code != 200:
+            print(f"⚠️ API error: {response.status_code} {response.reason}")
+            return None
+
         data = response.json()
+        if data.get("error"):
+            print(f"❌ API Error: {data.get('error_message')}")
+            return None
 
-        if "data" not in data or not data["data"].get("items"):
-            return 0
-
+        total_sent = 0
         for item in data["data"]["items"]:
-            for transfer in item.get("transfers", []):
-                from_address = transfer.get("from_address", "").lower()
-                to_address = transfer.get("to_address", "").lower()
-                contract_symbol = transfer.get("contract_ticker_symbol", "")
-                delta = int(transfer.get("delta", 0))
+            for transfer in item["transfers"]:
+                if transfer["from_address"].lower() == wallet and transfer["to_address"].lower() == BOT_WALLET:
+                    total_sent += int(transfer["delta"]) / (10 ** transfer["contract_decimals"])
 
-                if (
-                    from_address == wallet.lower() and
-                    to_address == BOT_WALLET and
-                    contract_symbol.upper() == "JXJ"
-                ):
-                    total_sent += delta
+        return int(total_sent)
 
-        return total_sent / 1e18  # assuming 18 decimals
     except Exception as e:
         print("❌ Error fetching tokens sent:", str(e))
         return None
+
 # === Transfer Watcher ===
 
 async def watch_transfers(app):
