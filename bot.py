@@ -5,6 +5,7 @@ from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from telegram.ext import ChatMemberHandler
 from web3 import Web3
 from dotenv import load_dotenv
 from quotes import get_ai_quote
@@ -33,6 +34,8 @@ CHAIN_NAME = "base-mainnet"
 # Web3 connection
 web3 = Web3(Web3.HTTPProvider(BASE_RPC))
 
+app = ApplicationBuilder().token(BOT_TOKEN).build()
+
 # JAXIM ABI (simplified)
 ABI = [
     {
@@ -59,6 +62,23 @@ ABI = [
 contract = web3.eth.contract(address=Web3.to_checksum_address(JAXIM_CONTRACT), abi=ABI)
 
 # === Telegram Bot Handlers ===
+
+async def welcome_on_added(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    new_status = update.my_chat_member.new_chat_member.status
+    if new_status == "member":
+        # Send photo with caption
+        with open("jaxim.jpg", "rb") as photo:
+            await context.bot.send_photo(
+                chat_id=update.effective_chat.id,
+                photo=photo,
+                caption=(
+                    "🧞‍♂️ *Welcome!* I'm *Jaxim Jeanie*, your blockchain genie!\n\n"
+                    "Use /howto to learn how to send tokens and receive magical AI quotes ✨"
+                ),
+                parse_mode="Markdown"
+            )
+
+app.add_handler(ChatMemberHandler(welcome_on_added, chat_member_types=["my_chat_member"]))
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
@@ -165,7 +185,7 @@ async def balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
         credits = max(tokens_sent - wishes_used, 0)
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text=f"💰 *Your wish credits:* `{credits}`\n(Tokens sent minus wishes used)",
+            text=f"💰 *Your wish credits:* `{credits}`\n",
             parse_mode="Markdown"
         )
     except Exception as e:
