@@ -1,4 +1,5 @@
 import os
+import requests
 import asyncio
 from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
@@ -21,6 +22,7 @@ from db import (
 load_dotenv()
 
 # ENV variables
+COVALENT_API_KEY = os.getenv("COVALENT_API_KEY") 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 BASE_RPC = os.getenv("BASE_RPC")
 JAXIM_CONTRACT = "0x082Ef77013B51f4a808e83a4d345cdc88cFdd9c4"
@@ -240,24 +242,32 @@ async def wishcount(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def get_tokens_sent(wallet):
     try:
         total_sent = 0
-        latest_block = web3.eth.block_number
-        from_block = 0
+        url = f"https://api.covalenthq.com/v1/base-mainnet/address/{wallet}/transfers_v2/?key={COVALENT_API_KEY}"
 
-        events = contract.events.Transfer().get_logs(
-            from_block=from_block,
-            to_block=latest_block
-        )
-        for event in events:
-            sender = event["args"]["from"]
-            receiver = event["args"]["to"]
-            amount = event["args"]["value"]
-            if receiver.lower() == BOT_WALLET.lower() and sender.lower() == wallet.lower():
-                total_sent += amount
-        return int(web3.from_wei(total_sent, 'ether'))
+        response = requests.get(url)
+        data = response.json()
+
+        if "data" not in data or not data["data"].get("items"):
+            return 0
+
+        for item in data["data"]["items"]:
+            for transfer in item.get("transfers", []):
+                from_address = transfer.get("from_address", "").lower()
+                to_address = transfer.get("to_address", "").lower()
+                contract_symbol = transfer.get("contract_ticker_symbol", "")
+                delta = int(transfer.get("delta", 0))
+
+                if (
+                    from_address == wallet.lower() and
+                    to_address == BOT_WALLET and
+                    contract_symbol.upper() == "JXJ"
+                ):
+                    total_sent += delta
+
+        return total_sent / 1e18  # assuming 18 decimals
     except Exception as e:
         print("❌ Error fetching tokens sent:", str(e))
         return None
-
 # === Transfer Watcher ===
 
 async def watch_transfers(app):
