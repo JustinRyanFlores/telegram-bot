@@ -1,7 +1,5 @@
 import os
-import random
 import asyncio
-import sqlite3
 from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 from telegram import Update

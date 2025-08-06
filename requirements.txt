@@ -2,3 +2,5 @@ python-telegram-bot
 web3
 python-dotenv
 google-generativeai
+mysql-connector-python
+PyMySQL
