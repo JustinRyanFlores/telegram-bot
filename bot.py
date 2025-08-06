@@ -5,7 +5,7 @@ from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
-from telegram.ext import ChatMemberHandler
+from telegram import InputFile
 from web3 import Web3
 from dotenv import load_dotenv
 from quotes import get_ai_quote
@@ -64,21 +64,33 @@ contract = web3.eth.contract(address=Web3.to_checksum_address(JAXIM_CONTRACT), a
 # === Telegram Bot Handlers ===
 
 async def welcome_on_added(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    new_status = update.my_chat_member.new_chat_member.status
-    if new_status == "member":
-        # Send photo with caption
-        with open("jaxim.jpg", "rb") as photo:
-            await context.bot.send_photo(
-                chat_id=update.effective_chat.id,
-                photo=photo,
-                caption=(
-                    "🧞‍♂️ *Welcome!* I'm *Jaxim Jeanie*, your blockchain genie!\n\n"
-                    "Use /howto to learn how to send tokens and receive magical advices! ✨"
-                ),
-                parse_mode="Markdown"
-            )
+    try:
+        old_status = update.my_chat_member.old_chat_member.status
+        new_status = update.my_chat_member.new_chat_member.status
 
-app.add_handler(ChatMemberHandler(welcome_on_added, chat_member_types=["my_chat_member"]))
+        if old_status in ["kicked", "left"] and new_status in ["member", "administrator"]:
+            photo_path = "assets/jaxim.jpg"  # Adjust this path if needed
+
+            if not os.path.exists(photo_path):
+                await context.bot.send_message(
+                    chat_id=update.effective_chat.id,
+                    text="👋 Welcome! (Image not found)"
+                )
+                return
+
+            with open(photo_path, "rb") as photo:
+                await context.bot.send_photo(
+                    chat_id=update.effective_chat.id,
+                    photo=InputFile(photo),
+                    caption=(
+                        "🧞‍♂️ *Jaxim Jeanie has arrived!*\n\n"
+                        "Thanks for summoning me into this group!\n"
+                        "Send me JAXIM tokens to receive your wish!"
+                    ),
+                    parse_mode=ParseMode.MARKDOWN
+                )
+    except Exception as e:
+        print(f"Error in welcome_on_added: {e}")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
@@ -349,8 +361,6 @@ async def watch_transfers(app):
 
 if __name__ == '__main__':
     init_db()
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
-
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("howto", howto))
     app.add_handler(CommandHandler("register", register))
