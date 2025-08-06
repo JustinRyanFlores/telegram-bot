@@ -244,28 +244,8 @@ async def wishcount(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def get_tokens_sent(wallet):
     try:
         wallet = wallet.lower()
-        
-        # 🔹 1. Check current JAXIM balance
-        balance_url = (
-            f"{COVALENT_BASE_URL}/{CHAIN_NAME}/address/"
-            f"{wallet}/balances_v2/?contract-address={JAXIM_CONTRACT}&key={COVALENT_API_KEY}"
-        )
-        balance_response = requests.get(balance_url)
-        balance_data = balance_response.json()
 
-        if not balance_data.get("error"):
-            items = balance_data["data"]["items"]
-            for item in items:
-                if item["contract_address"].lower() == JAXIM_CONTRACT.lower():
-                    balance_wei = int(item["balance"])
-                    decimals = item["contract_decimals"]
-                    symbol = item["contract_ticker_symbol"]
-                    balance = balance_wei / (10 ** decimals)
-                    print(f"🔎 {symbol} Balance of user {wallet}: {balance}")
-        else:
-            print("⚠️ Failed to fetch current balance:", balance_data.get("error_message"))
-
-        # 🔹 2. Get all transfers to the bot
+        # Call Covalent API to get transfers of this wallet for the given token
         transfer_url = f"{COVALENT_BASE_URL}/{CHAIN_NAME}/address/{wallet}/transfers_v2/"
         transfer_params = {
             "contract-address": JAXIM_CONTRACT,
@@ -274,7 +254,7 @@ def get_tokens_sent(wallet):
 
         response = requests.get(transfer_url, params=transfer_params)
         if response.status_code != 200:
-            print(f"⚠️ API error: {response.status_code} {response.reason}")
+            print(f"⚠️ API Error: {response.status_code} - {response.text}")
             return None
 
         data = response.json()
@@ -296,9 +276,8 @@ def get_tokens_sent(wallet):
         return int(total_sent)
 
     except Exception as e:
-        print("❌ Error fetching tokens sent:", str(e))
+        print("❌ Exception:", str(e))
         return None
-
 
 # === Transfer Watcher ===
 
