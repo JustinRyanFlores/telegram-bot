@@ -5,6 +5,7 @@ from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from telegram.ext import ChatMemberHandler
 from telegram import InputFile
 from web3 import Web3
 from dotenv import load_dotenv
@@ -67,7 +68,7 @@ async def welcome_on_added(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         old_status = update.my_chat_member.old_chat_member.status
         new_status = update.my_chat_member.new_chat_member.status
-
+        print(f"[DEBUG] old_status: {old_status}, new_status: {new_status}")
         if old_status in ["kicked", "left"] and new_status in ["member", "administrator"]:
             photo_path = "assets/jaxim.jpg"  # Adjust this path if needed
 
@@ -91,6 +92,8 @@ async def welcome_on_added(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
     except Exception as e:
         print(f"Error in welcome_on_added: {e}")
+
+app.add_handler(ChatMemberHandler(welcome_on_added, chat_member_types=["my_chat_member"]))
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
@@ -314,7 +317,6 @@ def get_tokens_sent(wallet):
 # === Transfer Watcher ===
 
 async def watch_transfers(app):
-    print("🔁 Watching for 1 JAXIM transfers to bot wallet...")
     last_block = web3.eth.block_number
 
     while True:
