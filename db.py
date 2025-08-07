@@ -70,8 +70,7 @@ def get_wish_count(telegram_id):
 def get_leaderboard(limit=10):
     conn = get_mysql_connection()
     c = conn.cursor()
-    query = f"SELECT telegram_id, wallet, wish_count FROM users ORDER BY wish_count DESC LIMIT {int(limit)}"
-    c.execute(query)
+    c.execute("SELECT telegram_id, wallet, wish_count FROM users ORDER BY wish_count DESC LIMIT %s", (limit,))
     results = c.fetchall()
     conn.close()
     return results

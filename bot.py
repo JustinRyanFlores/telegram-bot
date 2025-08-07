@@ -250,27 +250,36 @@ async def wish(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown"
     )
 
+def escape_md_v2(text):
+    """Escapes Telegram MarkdownV2 special characters."""
+    return re.sub(r'([_\*\[\]\(\)~`>#+\-=|{}.!\\])', r'\\\1', str(text))
+
+
 async def leaderboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
     top_users = get_leaderboard()
     if not top_users:
-        await update.message.reply_text("📉 No wishes have been made yet!", parse_mode="Markdown")
+        await update.message.reply_text("📉 No wishes have been made yet!", parse_mode="MarkdownV2")
         return
 
-    text = "\U0001F3C6 *Top Wishers Leaderboard* \U0001F3C6\n\n"
+    text = "🏆 *Top Wishers Leaderboard* 🏆\n\n"
     for idx, (telegram_id, wallet, count) in enumerate(top_users, 1):
-        # Try to get username, fallback to telegram_id
         try:
             user = await context.bot.get_chat(telegram_id)
             username = f"@{user.username}" if user.username else user.first_name
         except Exception:
             username = f"ID:{telegram_id}"
-        wallet_display = wallet if wallet else "N/A"
+
+        username_escaped = escape_md_v2(username)
+        wallet_escaped = escape_md_v2(wallet) if wallet else "N/A"
+        count_escaped = escape_md_v2(count)
+
         text += (
-            f"{idx}. {username}\n"
-            f"    Wallet: `{wallet_display}`\n"
-            f"    Wishes: *{count}*\n\n"
+            f"{idx}. {username_escaped}\n"
+            f"    Wallet: `{wallet_escaped}`\n"
+            f"    Wishes: *{count_escaped}*\n\n"
         )
-    await update.message.reply_text(text, parse_mode="Markdown")
+
+    await update.message.reply_text(text, parse_mode="MarkdownV2")
 
 async def wishcount(update: Update, context: ContextTypes.DEFAULT_TYPE):
     count = get_wish_count(update.effective_user.id)
