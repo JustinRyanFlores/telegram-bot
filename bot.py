@@ -1,6 +1,5 @@
 import os
 import asyncio
-import re
 import requests
 from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
@@ -255,9 +254,6 @@ def escape_html(text):
     """Escapes special HTML characters."""
     import html
     return html.escape(str(text))
-
-
-from telegram.helpers import escape_html
 
 async def leaderboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
     top_users = get_leaderboard()
