@@ -257,6 +257,8 @@ def escape_html(text):
     return html.escape(str(text))
 
 
+from telegram.helpers import escape_html
+
 async def leaderboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
     top_users = get_leaderboard()
     if not top_users:
@@ -276,12 +278,13 @@ async def leaderboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
         count_escaped = escape_html(count)
 
         text += (
-            f"{idx}. <b>{username_escaped}</b><br>"
-            f"&nbsp;&nbsp;&nbsp;&nbsp;Wallet: <code>{wallet_escaped}</code><br>"
-            f"&nbsp;&nbsp;&nbsp;&nbsp;Wishes: <b>{count_escaped}</b><br><br>"
+            f"{idx}. <b>{username_escaped}</b>\n"
+            f"    Wallet: <code>{wallet_escaped}</code>\n"
+            f"    Wishes: <b>{count_escaped}</b>\n\n"
         )
 
     await update.message.reply_text(text, parse_mode="HTML")
+
 
 async def wishcount(update: Update, context: ContextTypes.DEFAULT_TYPE):
     count = get_wish_count(update.effective_user.id)
