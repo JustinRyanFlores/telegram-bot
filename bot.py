@@ -255,15 +255,15 @@ def escape_md_v2(text):
     """Escapes Telegram MarkdownV2 special characters."""
     return re.sub(r'([_*\[\]()~`>#+\-=|{}.!\\])', r'\\\1', str(text))
 
-
-
+# Leaderboard handler
 async def leaderboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
     top_users = get_leaderboard()
     if not top_users:
-        await update.message.reply_text("📉 No wishes have been made yet!", parse_mode="MarkdownV2")
+        await update.message.reply_text(escape_md_v2("📉 No wishes have been made yet!"), parse_mode="MarkdownV2")
         return
 
-    text = "🏆 *Top Wishers Leaderboard* 🏆\n\n"
+    text = escape_md_v2("🏆 *Top Wishers Leaderboard* 🏆") + "\n\n"
+
     for idx, (telegram_id, wallet, count) in enumerate(top_users, 1):
         try:
             user = await context.bot.get_chat(telegram_id)
