@@ -253,7 +253,8 @@ async def wish(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def escape_md_v2(text):
     """Escapes Telegram MarkdownV2 special characters."""
-    return re.sub(r'([_\*\[\]\(\)~`>#+\-=|{}.!\\])', r'\\\1', str(text))
+    return re.sub(r'([_*\[\]()~`>#+\-=|{}.!\\])', r'\\\1', str(text))
+
 
 
 async def leaderboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
