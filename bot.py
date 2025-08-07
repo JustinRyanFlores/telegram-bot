@@ -251,19 +251,19 @@ async def wish(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown"
     )
 
-def escape_md_v2(text):
-    """Escapes Telegram MarkdownV2 special characters."""
-    return re.sub(r'([_*\[\]()~`>#+\-=|{}.!\\])', r'\\\1', str(text))
+def escape_html(text):
+    """Escapes special HTML characters."""
+    import html
+    return html.escape(str(text))
 
-# Leaderboard handler
+
 async def leaderboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
     top_users = get_leaderboard()
     if not top_users:
-        await update.message.reply_text(escape_md_v2("📉 No wishes have been made yet!"), parse_mode="MarkdownV2")
+        await update.message.reply_text("📉 No wishes have been made yet!")
         return
 
-    text = escape_md_v2("🏆 *Top Wishers Leaderboard* 🏆") + "\n\n"
-
+    text = "<b>🏆 Top Wishers Leaderboard 🏆</b>\n\n"
     for idx, (telegram_id, wallet, count) in enumerate(top_users, 1):
         try:
             user = await context.bot.get_chat(telegram_id)
@@ -271,17 +271,17 @@ async def leaderboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except Exception:
             username = f"ID:{telegram_id}"
 
-        username_escaped = escape_md_v2(username)
-        wallet_escaped = escape_md_v2(wallet) if wallet else "N/A"
-        count_escaped = escape_md_v2(count)
+        username_escaped = escape_html(username)
+        wallet_escaped = escape_html(wallet) if wallet else "N/A"
+        count_escaped = escape_html(count)
 
         text += (
-            f"{idx}. {username_escaped}\n"
-            f"    Wallet: `{wallet_escaped}`\n"
-            f"    Wishes: *{count_escaped}*\n\n"
+            f"{idx}. <b>{username_escaped}</b><br>"
+            f"&nbsp;&nbsp;&nbsp;&nbsp;Wallet: <code>{wallet_escaped}</code><br>"
+            f"&nbsp;&nbsp;&nbsp;&nbsp;Wishes: <b>{count_escaped}</b><br><br>"
         )
 
-    await update.message.reply_text(text, parse_mode="MarkdownV2")
+    await update.message.reply_text(text, parse_mode="HTML")
 
 async def wishcount(update: Update, context: ContextTypes.DEFAULT_TYPE):
     count = get_wish_count(update.effective_user.id)
